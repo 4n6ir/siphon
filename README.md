@@ -17,5 +17,6 @@ ebs_gb = 8
 ```
 A network monitoring interface is attached to every subnet in the configured VPC.
 ### NETWORK MONITORING
-VPC Traffic Mirroring is available on Nitro-based EC2 instances and select non-Nitro based EC2 types: C4, D2, G3, G3s, H1, I3, M4, P2, P3, R4, X1, and X1e.
+VPC Traffic Mirroring is available on Nitro-based instances and select non-Nitro based EC2 types: C4, D2, G3, G3s, H1, I3, M4, P2, P3, R4, X1, and X1e.
+
 https://docs.aws.amazon.com/vpc/latest/mirroring/what-is-traffic-mirroring.html
