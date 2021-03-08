@@ -47,9 +47,9 @@ class SiphonStack(core.Stack):
         ### Ubuntu Server 20.04 LTS ###
         ubuntu = _ec2.MachineImage.generic_linux(
             {
-                'us-east-1': 'ami-0885b1f6bd170450c',
-                'us-east-2': 'ami-0a91cd140a1fc148a',
-                'us-west-2': 'ami-07dd19a7900a1f049'
+                'us-east-1': 'ami-042e8287309f5df03',
+                'us-east-2': 'ami-08962a4068733a2b6',
+                'us-west-2': 'ami-0ca5c3bd5a268e7db'
             }
         )
 

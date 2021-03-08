@@ -1,9 +1,9 @@
 -e .
-aws_cdk.aws_ec2
-aws_cdk.aws_events
-aws_cdk.aws_events_targets
-aws_cdk.aws_iam
-aws-cdk.aws-lambda
-aws_cdk.aws_logs
-aws_cdk.aws_s3
-aws_cdk.aws_ssm
+aws_cdk.aws_ec2==1.90.1
+aws_cdk.aws_events==1.90.1
+aws_cdk.aws_events_targets==1.90.1
+aws_cdk.aws_iam==1.90.1
+aws-cdk.aws-lambda==1.90.1
+aws_cdk.aws_logs==1.90.1
+aws_cdk.aws_s3==1.90.1
+aws_cdk.aws_ssm==1.90.1
