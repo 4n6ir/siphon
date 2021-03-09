@@ -2,20 +2,21 @@
 
 import os
 
-from aws_cdk import core
+from aws_cdk import core as cdk
 
 from siphon.siphon_stack import SiphonStack
 
 
-app = core.App()
-
+app = cdk.App()
 SiphonStack(
-    app, 'siphon', env = core.Environment(
+    app, 'siphon', env = cdk.Environment(
         account = os.environ['CDK_DEFAULT_ACCOUNT'],
         region = os.environ['CDK_DEFAULT_REGION']
     )
 )
 
-core.Tags.of(app).add('siphon', 'siphon')
+
+cdk.Tags.of(app).add('siphon', 'siphon')
+
 
 app.synth()

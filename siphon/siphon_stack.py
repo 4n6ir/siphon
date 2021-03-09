@@ -1,7 +1,7 @@
 import os
 
 from aws_cdk import (
-    core,
+    core as cdk,
     aws_ec2 as _ec2,
     aws_events as _events,
     aws_events_targets as _targets,
@@ -9,7 +9,7 @@ from aws_cdk import (
     aws_lambda as _lambda,
     aws_logs as _logs,
     aws_s3 as _s3,
-    aws_ssm as _ssm,
+    aws_ssm as _ssm
 )
 
 
@@ -19,9 +19,9 @@ ec2_type = 't3a.small'
 ebs_gb = 8
 
 
-class SiphonStack(core.Stack):
+class SiphonStack(cdk.Stack):
 
-    def __init__(self, scope: core.Construct, construct_id: str, **kwargs) -> None:
+    def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         account = os.environ['CDK_DEFAULT_ACCOUNT']
@@ -39,7 +39,7 @@ class SiphonStack(core.Stack):
             bucket_name = bucket_name,
             encryption = _s3.BucketEncryption.KMS_MANAGED,
             block_public_access = _s3.BlockPublicAccess.BLOCK_ALL,
-            removal_policy = core.RemovalPolicy.DESTROY,
+            removal_policy = cdk.RemovalPolicy.DESTROY,
             auto_delete_objects = True,
             versioned = True
         )
@@ -192,7 +192,7 @@ class SiphonStack(core.Stack):
             code = _lambda.Code.from_asset('config'),
             handler = 'config.handler',
             runtime = _lambda.Runtime.PYTHON_3_8,
-            timeout = core.Duration.seconds(30),
+            timeout = cdk.Duration.seconds(30),
             role = config,
             environment = dict(
                 INSTANCES = str(instanceids),
@@ -205,7 +205,7 @@ class SiphonStack(core.Stack):
             self, 'logs',
             log_group_name = '/aws/lambda/'+compute.function_name,
             retention = _logs.RetentionDays.ONE_DAY,
-            removal_policy = core.RemovalPolicy.DESTROY
+            removal_policy = cdk.RemovalPolicy.DESTROY
         )
 
         rule = _events.Rule(
