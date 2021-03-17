@@ -1,15 +1,21 @@
 import os
 
 from aws_cdk import (
-    core as cdk,
+    aws_dynamodb as _dynamodb,
     aws_ec2 as _ec2,
     aws_events as _events,
     aws_events_targets as _targets,
     aws_iam as _iam,
     aws_lambda as _lambda,
+    aws_lambda_event_sources as _sources,
     aws_logs as _logs,
     aws_s3 as _s3,
-    aws_ssm as _ssm
+    aws_s3_notifications as _notifications,
+    aws_sns as _sns,
+    aws_sns_subscriptions as _subscriptions,
+    aws_sqs as _sqs,
+    aws_ssm as _ssm,
+    core as cdk,
 )
 
 
@@ -27,11 +33,29 @@ class SiphonStack(cdk.Stack):
         account = os.environ['CDK_DEFAULT_ACCOUNT']
         region = os.environ['CDK_DEFAULT_REGION']
         bucket_name = 'siphon-'+account+'-'+region+'-'+vpc_id
+        archive_name = 'siphon-parquet-'+account+'-'+region+'-'+vpc_id
         ssm_name = '/siphon/'+vpc_id+'/ssm'
 
         vpc = _ec2.Vpc.from_lookup(
             self, 'vpc',
             vpc_id = vpc_id
+        )
+
+        data = _dynamodb.Table(
+            self, 'data',
+            partition_key = {'name': 'pk', 'type': _dynamodb.AttributeType.STRING},
+            sort_key = {'name': 'sk', 'type': _dynamodb.AttributeType.STRING},
+            billing_mode = _dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy = cdk.RemovalPolicy.DESTROY,
+            point_in_time_recovery = True
+        )
+
+        status = _ssm.StringParameter(
+            self, 'status',
+            description = 'Siphon Parser Status',
+            parameter_name = '/siphon/dynamodb/data',
+            string_value = data.table_name,
+            tier = _ssm.ParameterTier.STANDARD,
         )
 
         bucket = _s3.Bucket(
@@ -42,6 +66,87 @@ class SiphonStack(cdk.Stack):
             removal_policy = cdk.RemovalPolicy.DESTROY,
             auto_delete_objects = True,
             versioned = True
+        )
+
+        archive = _s3.Bucket(
+            self, 'archive',
+            bucket_name = archive_name,
+            encryption = _s3.BucketEncryption.KMS_MANAGED,
+            block_public_access = _s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy = cdk.RemovalPolicy.DESTROY,
+            auto_delete_objects = True,
+            versioned = True
+        )
+
+        ### Zeek Parser ###
+        zeek = _iam.Role(
+            self, 'zeek', 
+            assumed_by = _iam.ServicePrincipal(
+                'lambda.amazonaws.com'
+            )
+        )
+        
+        zeek.add_managed_policy(
+            _iam.ManagedPolicy.from_aws_managed_policy_name(
+                'service-role/AWSLambdaBasicExecutionRole'
+            )
+        )
+        
+        zeek.add_to_policy(
+            _iam.PolicyStatement(
+                actions = [
+                    'dynamodb:PutItem',
+                    's3:GetObject',
+                    's3:PutObject',
+                    'ssm:GetParameter'
+                ],
+                resources = [
+                    '*'
+                ]
+            )
+        )
+        
+        parser = _lambda.DockerImageFunction(
+            self, 'parser',
+            code = _lambda.DockerImageCode.from_image_asset('parser'),
+            timeout = cdk.Duration.seconds(900),
+            role = zeek,
+            environment = dict(
+                DYNAMODB = '/siphon/dynamodb/data'
+            ),
+            memory_size = 128
+        )
+
+        history = _logs.LogGroup(
+            self, 'history',
+            log_group_name = '/aws/lambda/'+parser.function_name,
+            retention = _logs.RetentionDays.ONE_DAY,
+            removal_policy = cdk.RemovalPolicy.DESTROY
+        )
+        
+        queue = _sqs.Queue(
+            self, 'queue',
+            encryption = _sqs.QueueEncryption.KMS_MANAGED,
+            visibility_timeout = cdk.Duration.seconds(1800)
+        )
+        
+        queue.grant_consume_messages(parser)
+
+        parser.add_event_source(
+            _sources.SqsEventSource(
+                queue=queue
+            )
+        )
+
+        topic = _sns.Topic(
+            self, 'topic'
+        )
+        
+        topic.add_subscription(_subscriptions.SqsSubscription(queue))
+        
+        bucket.add_event_notification(
+            _s3.EventType.OBJECT_CREATED, 
+            _notifications.SnsDestination(topic)
         )
 
         ### Ubuntu Server 20.04 LTS ###
@@ -160,6 +265,7 @@ class SiphonStack(cdk.Stack):
                 eni_count += 1
                 eni_index += 1
 
+        ### Ubuntu Configuration ###
         config = _iam.Role(
             self, 'config', 
             assumed_by = _iam.ServicePrincipal(

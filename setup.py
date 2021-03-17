@@ -19,7 +19,7 @@ setuptools.setup(
     packages=setuptools.find_packages(where="siphon"),
 
     install_requires=[
-        "aws-cdk.core==1.92.0",
+        "aws-cdk.core==1.94.1",
     ],
 
     python_requires=">=3.6",
