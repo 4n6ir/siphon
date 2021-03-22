@@ -112,7 +112,9 @@ class SiphonStack(cdk.Stack):
             timeout = cdk.Duration.seconds(900),
             role = zeek,
             environment = dict(
-                DYNAMODB = '/siphon/dynamodb/data'
+                DYNAMODB = data.table_name,
+                S3BUCKET = bucket.bucket_name,
+                S3ARCHIVE = archive.bucket_name
             ),
             memory_size = 128
         )
@@ -126,7 +128,6 @@ class SiphonStack(cdk.Stack):
         
         queue = _sqs.Queue(
             self, 'queue',
-            encryption = _sqs.QueueEncryption.KMS_MANAGED,
             visibility_timeout = cdk.Duration.seconds(1800)
         )
         
@@ -142,7 +143,12 @@ class SiphonStack(cdk.Stack):
             self, 'topic'
         )
         
-        topic.add_subscription(_subscriptions.SqsSubscription(queue))
+        topic.add_subscription(
+            _subscriptions.SqsSubscription(
+                queue,
+                raw_message_delivery = True
+            )
+        )
         
         bucket.add_event_notification(
             _s3.EventType.OBJECT_CREATED, 
