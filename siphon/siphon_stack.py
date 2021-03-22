@@ -116,7 +116,7 @@ class SiphonStack(cdk.Stack):
                 S3BUCKET = bucket.bucket_name,
                 S3ARCHIVE = archive.bucket_name
             ),
-            memory_size = 128
+            memory_size = 256
         )
 
         history = _logs.LogGroup(
