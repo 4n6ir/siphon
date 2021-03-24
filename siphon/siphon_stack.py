@@ -34,6 +34,7 @@ class SiphonStack(cdk.Stack):
         region = os.environ['CDK_DEFAULT_REGION']
         bucket_name = 'siphon-'+account+'-'+region+'-'+vpc_id
         archive_name = 'siphon-parquet-'+account+'-'+region+'-'+vpc_id
+        athena_name = 'siphon-athena-'+account+'-'+region+'-'+vpc_id
         ssm_name = '/siphon/'+vpc_id+'/ssm'
 
         vpc = _ec2.Vpc.from_lookup(
@@ -71,6 +72,16 @@ class SiphonStack(cdk.Stack):
         archive = _s3.Bucket(
             self, 'archive',
             bucket_name = archive_name,
+            encryption = _s3.BucketEncryption.KMS_MANAGED,
+            block_public_access = _s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy = cdk.RemovalPolicy.DESTROY,
+            auto_delete_objects = True,
+            versioned = True
+        )
+
+        athena = _s3.Bucket(
+            self, 'athena',
+            bucket_name = athena_name,
             encryption = _s3.BucketEncryption.KMS_MANAGED,
             block_public_access = _s3.BlockPublicAccess.BLOCK_ALL,
             removal_policy = cdk.RemovalPolicy.DESTROY,
@@ -116,7 +127,7 @@ class SiphonStack(cdk.Stack):
                 S3BUCKET = bucket.bucket_name,
                 S3ARCHIVE = archive.bucket_name
             ),
-            memory_size = 256
+            memory_size = 128
         )
 
         history = _logs.LogGroup(
@@ -267,6 +278,14 @@ class SiphonStack(cdk.Stack):
                     instance_id = instance.instance_id,
                     network_interface_id = network.ref,
                     delete_on_termination = True
+                )
+                eni_name = '/siphonmirror/'+vpc_id+'/instance'+str(i)+'/eni'+str(eni_count)
+                mirror = _ssm.StringParameter(
+                    self, 'mirror'+str(i)+'eni'+str(eni_count),
+                    description = 'Siphon ENI Target Mirror(s)',
+                    parameter_name = eni_name,
+                    string_value = network.ref,
+                    tier = _ssm.ParameterTier.STANDARD,
                 )
                 eni_count += 1
                 eni_index += 1

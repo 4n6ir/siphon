@@ -31,46 +31,68 @@ def lambdaHandler(event, context):
     objectlist = json.loads(objects)
     objectname = objectlist['Records'][0]['s3']['object']['key'].replace('%3A', ':')
     
-    dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table(os.environ['DYNAMODB'])
+    logger.info('OBJECT: '+objectname)
     
-    table.put_item(
-        Item= {
-            'pk': 'SIPHON#',
-            'sk': 'SIPHON#'+objectname,
-            'bucketname': os.environ['S3BUCKET'],
-            'objectname': objectname,
-            'status': 'STARTED'
-        }
-    )
-
-    s3 = boto3.client('s3')
-
-    s3.download_file(os.environ['S3BUCKET'], objectname, '/tmp/transfer.log.gz')
-
-    with gzip.open('/tmp/transfer.log.gz', 'rb') as f_in, open('/tmp/gunzip.log', 'wb') as f_out:
-        shutil.copyfileobj(f_in, f_out)
-
-    log_to_df = LogToDataFrame()
+    parsed = objectname.split('/')
+    output = parsed[2].split('.')
     
-    zeek_df = log_to_df.create_dataframe('/tmp/gunzip.log')
-    print('Dataframe Created: {:d} rows...'.format(len(zeek_df)))
+    if output[0] != 'conn-summary':
+        
+        logger.info('STARTED: '+objectname)
+    
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table(os.environ['DYNAMODB'])
+    
+        table.put_item(
+            Item= {
+                'pk': 'SIPHON#',
+                'sk': 'SIPHON#'+objectname,
+                'bucketname': os.environ['S3BUCKET'],
+                'objectname': objectname,
+                'status': 'STARTED'
+            }
+        )
 
-    df = convert_timedelta_to_str(zeek_df)
+        logger.info('TRANSFER: '+objectname)
+
+        s3 = boto3.client('s3')
+
+        s3.download_file(os.environ['S3BUCKET'], objectname, '/tmp/transfer.log.gz')
+
+        with gzip.open('/tmp/transfer.log.gz', 'rb') as f_in, open('/tmp/gunzip.log', 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
+        logger.info('CONVERT: '+objectname)
+
+        log_to_df = LogToDataFrame()
     
-    zeek_df.to_parquet('/tmp/transfer.parquet', compression='snappy', use_deprecated_int96_timestamps=True)
+        zeek_df = log_to_df.create_dataframe('/tmp/gunzip.log')
+        
+        logger.info('LENGTH: '+str(len(zeek_df)))
+
+        df = convert_timedelta_to_str(zeek_df)
     
-    s3.upload_file('/tmp/transfer.parquet', os.environ['S3ARCHIVE'], objectname+'.parquet')
+        logger.info('PARQUET: '+objectname)
     
-    table.put_item(
-        Item= {
-            'pk': 'SIPHON#',
-            'sk': 'SIPHON#'+objectname,
-            'bucketname': os.environ['S3BUCKET'],
-            'objectname': objectname,
-            'status': 'COMPLETED'
-        }
-    )
+        zeek_df.to_parquet('/tmp/transfer.parquet', compression='snappy', use_deprecated_int96_timestamps=True)
+    
+        logger.info('UPLOAD: '+objectname)
+        
+        s3.upload_file('/tmp/transfer.parquet', os.environ['S3ARCHIVE'], output[0]+'/'+objectname+'.parquet')
+    
+        logger.info('RECORD: '+objectname)
+    
+        table.put_item(
+            Item= {
+                'pk': 'SIPHON#',
+                'sk': 'SIPHON#'+objectname,
+                'bucketname': os.environ['S3BUCKET'],
+                'objectname': objectname,
+                'status': 'COMPLETED'
+            }
+        )
+    
+        logger.info('END: '+objectname)
     
     return {
         'statusCode': 200,
