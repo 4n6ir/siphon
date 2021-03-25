@@ -36,7 +36,7 @@ def lambdaHandler(event, context):
     parsed = objectname.split('/')
     output = parsed[2].split('.')
     
-    if output[0] != 'conn-summary':
+    if output[0] != 'conn-summary' and output[0] != 'loaded_scripts' and output[0] != 'stderr' and output[0] != 'stdout':
         
         logger.info('STARTED: '+objectname)
     
@@ -78,7 +78,7 @@ def lambdaHandler(event, context):
     
         logger.info('UPLOAD: '+objectname)
         
-        s3.upload_file('/tmp/transfer.parquet', os.environ['S3ARCHIVE'], output[0]+'/'+objectname+'.parquet')
+        s3.upload_file('/tmp/transfer.parquet', os.environ['S3ARCHIVE'], output[0]+'/'+parsed[1]+'/'+parsed[0]+'/'+parsed[2]+'.parquet')
     
         logger.info('RECORD: '+objectname)
     

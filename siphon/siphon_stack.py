@@ -19,7 +19,7 @@ from aws_cdk import (
 )
 
 
-vpc_id = 'vpc-<number>'
+vpc_id = 'vpc-0e0c23ac64e44863a'
 ec2_count = 1
 ec2_type = 't3a.small'
 ebs_gb = 8
