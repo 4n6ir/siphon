@@ -1,22 +1,95 @@
 # siphon
-Three great open-source network security monitoring solutions exist!
+
+### HISTORY
+
+On June 25th, 2019, Amazon Web Services (AWS) released VPC Traffic Mirroring for Nitro-based instances encapsulated over VXLAN on UDP port 4789. Support was expanded on February 10th, 2021, to include limited Xen instance types.
+
+![siphon-data-flow](images/dataflow.png)
+
+https://docs.aws.amazon.com/vpc/latest/mirroring/traffic-mirroring-considerations.html
+
+### EXISTING
+
+Three great open-source network security monitoring solutions in alphabetical order already exist!
+
 - Arkime - https://github.com/arkime
 - Rock NSM - https://github.com/rocknsm
 - Security Onion 2 - https://github.com/Security-Onion-Solutions
 
-Why would we need yet another version? 
-- Infrastructure as Code
-- Minimum Specifications
 ### CONFIGURATION
+
+Siphon was built using the Cloud Deployment Kit (CDK) to attach an instance with minimum specifications to an existing VPC that performs network security monitoring using Suricata and Zeek with S3 storage.
+
 Minimum requirements are network connectivity to the monitored resource with an instance that has 2 vCPUs, 2 GiB Memory, and 8 GB Storage here --> https://github.com/4n6ir/siphon/blob/main/siphon/siphon_stack.py#L22.
+
+A network monitoring interface is attached to every subnet in the configured VPC.
+
 ```
 vpc_id = 'vpc-<number>'
 ec2_count = 1
 ec2_type = 't3a.small'
 ebs_gb = 8
 ```
-A network monitoring interface is attached to every subnet in the configured VPC.
-### NETWORK MONITORING
-VPC Traffic Mirroring is available on Nitro-based instances and select non-Nitro based EC2 types: C4, D2, G3, G3s, H1, I3, M4, P2, P3, R4, X1, and X1e.
 
-https://docs.aws.amazon.com/vpc/latest/mirroring/what-is-traffic-mirroring.html
+Ubuntu 20.04 was used for long-term support and software dependencies but does not have AWS CLI installed by default requiring a second installation stage using the SSM agent.
+
+https://github.com/4n6ir/siphon-config
+
+### ZAT
+
+Zeek Analysis Tools (ZAT) from Brian Wylie at Super Cow Powers provides a Python package that converts the compressed Zeek logs to Apache Parquet columnar storage for Athena searches.
+
+https://github.com/SuperCowPowers/zat
+
+### ATHENA
+
+The S3 bucket containing the Parquet files is partitioned by Zeek log, year, month, day, and hostname to limit search volume since it is billed by the terabyte (TB).
+
+### TABLE DDL
+
+##### conn.log
+
+```
+CREATE EXTERNAL TABLE `conn`(
+  `uid` string, 
+  `id.orig_h` string, 
+  `id.orig_p` bigint, 
+  `id.resp_h` string, 
+  `id.resp_p` bigint, 
+  `proto` string, 
+  `service` string, 
+  `duration` string, 
+  `orig_bytes` bigint, 
+  `resp_bytes` bigint, 
+  `conn_state` string, 
+  `local_orig` string, 
+  `local_resp` string, 
+  `missed_bytes` bigint, 
+  `history` string, 
+  `orig_pkts` bigint, 
+  `orig_ip_bytes` bigint, 
+  `resp_pkts` bigint, 
+  `resp_ip_bytes` bigint, 
+  `tunnel_parents` string, 
+  `ts` timestamp)
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+LOCATION
+  's3://siphon-parquet-732839057592-us-east-2-vpc-0e0c23ac64e44863a/conn/'
+TBLPROPERTIES (
+  'CrawlerSchemaDeserializerVersion'='1.0', 
+  'CrawlerSchemaSerializerVersion'='1.0', 
+  'UPDATED_BY_CRAWLER'='conn', 
+  'averageRecordSize'='48', 
+  'classification'='parquet', 
+  'compressionType'='none', 
+  'objectCount'='39', 
+  'recordCount'='75837', 
+  'sizeKey'='4269170', 
+  'typeOfData'='file')
+```
+
