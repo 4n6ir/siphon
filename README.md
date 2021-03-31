@@ -149,9 +149,257 @@ LOCATION
   's3://<bucket>/dns/'
 ```
 
-##### 
+##### dpd.log
 
 ```
-
+CREATE EXTERNAL TABLE `dpd`(
+  `uid` string, 
+  `id.orig_h` string, 
+  `id.orig_p` bigint, 
+  `id.resp_h` string, 
+  `id.resp_p` bigint, 
+  `proto` string, 
+  `analyzer` string, 
+  `failure_reason` string, 
+  `ts` timestamp)
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+LOCATION
+  's3://<bucket>/dpd/'
 ```
 
+##### files.log
+
+```
+CREATE EXTERNAL TABLE `files`(
+  `fuid` string, 
+  `tx_hosts` string, 
+  `rx_hosts` string, 
+  `conn_uids` string, 
+  `source` string, 
+  `depth` bigint, 
+  `analyzers` string, 
+  `mime_type` string, 
+  `filename` int, 
+  `duration` string, 
+  `local_orig` string, 
+  `is_orig` string, 
+  `seen_bytes` bigint, 
+  `total_bytes` bigint, 
+  `missing_bytes` bigint, 
+  `overflow_bytes` bigint, 
+  `timedout` string, 
+  `parent_fuid` int, 
+  `md5` string, 
+  `sha1` string, 
+  `sha256` string, 
+  `extracted` int, 
+  `extracted_cutoff` int, 
+  `extracted_size` bigint, 
+  `ts` timestamp)
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+LOCATION
+  's3://<bucket>/files/'
+```
+
+##### http.log
+
+```
+CREATE EXTERNAL TABLE `http`(
+  `uid` string, 
+  `id.orig_h` string, 
+  `id.orig_p` bigint, 
+  `id.resp_h` string, 
+  `id.resp_p` bigint, 
+  `trans_depth` bigint, 
+  `method` string, 
+  `host` string, 
+  `uri` string, 
+  `referrer` string, 
+  `version` string, 
+  `user_agent` string, 
+  `origin` string, 
+  `request_body_len` bigint, 
+  `response_body_len` bigint, 
+  `status_code` bigint, 
+  `status_msg` string, 
+  `info_code` bigint, 
+  `info_msg` int, 
+  `tags` string, 
+  `username` string, 
+  `password` int, 
+  `proxied` string, 
+  `orig_fuids` string, 
+  `orig_filenames` int, 
+  `orig_mime_types` string, 
+  `resp_fuids` string, 
+  `resp_filenames` int, 
+  `resp_mime_types` string, 
+  `ts` timestamp)
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+LOCATION
+  's3://<bucket>/http/'
+```
+
+##### ntp.log
+
+```
+CREATE EXTERNAL TABLE `ntp`(
+  `uid` string, 
+  `id.orig_h` string, 
+  `id.orig_p` bigint, 
+  `id.resp_h` string, 
+  `id.resp_p` bigint, 
+  `version` bigint, 
+  `mode` bigint, 
+  `stratum` bigint, 
+  `poll` string, 
+  `precision` string, 
+  `root_delay` string, 
+  `root_disp` string, 
+  `ref_id` string, 
+  `ref_time` timestamp, 
+  `org_time` timestamp, 
+  `rec_time` timestamp, 
+  `xmt_time` timestamp, 
+  `num_exts` bigint, 
+  `ts` timestamp)
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+LOCATION
+  's3://<bucket>/ntp/'
+```
+
+##### ssl.log
+
+```
+CREATE EXTERNAL TABLE `ssl`(
+  `uid` string, 
+  `id.orig_h` string, 
+  `id.orig_p` bigint, 
+  `id.resp_h` string, 
+  `id.resp_p` bigint, 
+  `version` string, 
+  `cipher` string, 
+  `curve` string, 
+  `server_name` string, 
+  `resumed` string, 
+  `last_alert` string, 
+  `next_protocol` int, 
+  `established` string, 
+  `cert_chain_fuids` string, 
+  `client_cert_chain_fuids` string, 
+  `subject` string, 
+  `issuer` string, 
+  `client_subject` int, 
+  `client_issuer` int, 
+  `validation_status` string, 
+  `ts` timestamp)
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+LOCATION
+  's3://<bucket>/ssl/'
+```
+
+##### tunnel.log
+
+```
+CREATE EXTERNAL TABLE `tunnel`(
+  `uid` string, 
+  `id.orig_h` string, 
+  `id.orig_p` bigint, 
+  `id.resp_h` string, 
+  `id.resp_p` bigint, 
+  `tunnel_type` string, 
+  `action` string, 
+  `ts` timestamp)
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+LOCATION
+  's3://<bucket>/tunnel/'
+```
+
+##### weird.log
+
+```
+CREATE EXTERNAL TABLE `weird`(
+  `uid` string, 
+  `id.orig_h` string, 
+  `id.orig_p` bigint, 
+  `id.resp_h` string, 
+  `id.resp_p` bigint, 
+  `name` string, 
+  `addl` int, 
+  `notice` string, 
+  `peer` string, 
+  `source` string, 
+  `ts` timestamp)
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+LOCATION
+  's3://<bucket>/weird/'
+```
+
+##### x509.log
+
+```
+CREATE EXTERNAL TABLE `x509`(
+  `id` string, 
+  `certificate.version` bigint, 
+  `certificate.serial` string, 
+  `certificate.subject` string, 
+  `certificate.issuer` string, 
+  `certificate.not_valid_before` timestamp, 
+  `certificate.not_valid_after` timestamp, 
+  `certificate.key_alg` string, 
+  `certificate.sig_alg` string, 
+  `certificate.key_type` string, 
+  `certificate.key_length` bigint, 
+  `certificate.exponent` string, 
+  `certificate.curve` int, 
+  `san.dns` string, 
+  `san.uri` int, 
+  `san.email` int, 
+  `san.ip` int, 
+  `basic_constraints.ca` string, 
+  `basic_constraints.path_len` bigint, 
+  `ts` timestamp)
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+LOCATION
+  's3://<bucket>/x509/'
+```
