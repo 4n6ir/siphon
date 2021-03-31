@@ -34,7 +34,7 @@ def handler(event, context):
             DocumentName='AWS-RunRemoteScript',
             DocumentVersion='1',
             TimeoutSeconds=600,
-            Parameters={"sourceType":["GitHub"],"sourceInfo":["{\"owner\":\"4n6ir\",\"repository\":\"siphon-config\",\"getOptions\":\"commitID:fb2b64c8739dd39a1e29e9c23e7c06a0d233cca3\",\"path\":\"launch-siphon.sh\"}"],"commandLine":["launch-siphon.sh"],"workingDirectory":[""],"executionTimeout":["3600"]},
+            Parameters={"sourceType":["GitHub"],"sourceInfo":["{\"owner\":\"4n6ir\",\"repository\":\"siphon-config\",\"getOptions\":\"commitID:97990d1d40309a0839beca009462f2ce5c22c2e6\",\"path\":\"launch-siphon.sh\"}"],"commandLine":["launch-siphon.sh"],"workingDirectory":[""],"executionTimeout":["3600"]},
             MaxConcurrency='50',
             MaxErrors='0'
         )
