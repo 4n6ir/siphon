@@ -79,17 +79,79 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
 LOCATION
-  's3://siphon-parquet-732839057592-us-east-2-vpc-0e0c23ac64e44863a/conn/'
-TBLPROPERTIES (
-  'CrawlerSchemaDeserializerVersion'='1.0', 
-  'CrawlerSchemaSerializerVersion'='1.0', 
-  'UPDATED_BY_CRAWLER'='conn', 
-  'averageRecordSize'='48', 
-  'classification'='parquet', 
-  'compressionType'='none', 
-  'objectCount'='39', 
-  'recordCount'='75837', 
-  'sizeKey'='4269170', 
-  'typeOfData'='file')
+  's3://<bucket>/conn/'
+```
+
+##### dhcp.log
+
+```
+CREATE EXTERNAL TABLE `dhcp`(
+  `uids` string, 
+  `client_addr` string, 
+  `server_addr` string, 
+  `mac` string, 
+  `host_name` int, 
+  `client_fqdn` int, 
+  `domain` string, 
+  `requested_addr` int, 
+  `assigned_addr` string, 
+  `lease_time` string, 
+  `client_message` int, 
+  `server_message` int, 
+  `msg_types` string, 
+  `duration` string, 
+  `ts` timestamp)
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+LOCATION
+  's3://<bucket>/dhcp/'
+```
+
+##### dns.log
+
+```
+CREATE EXTERNAL TABLE `dns`(
+  `uid` string, 
+  `id.orig_h` string, 
+  `id.orig_p` bigint, 
+  `id.resp_h` string, 
+  `id.resp_p` bigint, 
+  `proto` string, 
+  `trans_id` bigint, 
+  `rtt` string, 
+  `query` string, 
+  `qclass` bigint, 
+  `qclass_name` string, 
+  `qtype` bigint, 
+  `qtype_name` string, 
+  `rcode` bigint, 
+  `rcode_name` string, 
+  `aa` string, 
+  `tc` string, 
+  `rd` string, 
+  `ra` string, 
+  `z` bigint, 
+  `answers` string, 
+  `ttls` string, 
+  `rejected` string, 
+  `ts` timestamp)
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+LOCATION
+  's3://<bucket>/dns/'
+```
+
+##### 
+
+```
+
 ```
 
