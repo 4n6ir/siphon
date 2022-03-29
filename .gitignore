@@ -9,4 +9,5 @@ __pycache__
 .cdk.staging
 cdk.out
 .~c9*
+*siphon.sh*
 *cdk.context.json*

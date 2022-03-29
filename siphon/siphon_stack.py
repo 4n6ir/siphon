@@ -1,7 +1,6 @@
-import cdk_nag
+import os
 
 from aws_cdk import (
-    Aspects,
     CustomResource,
     Duration,
     RemovalPolicy,
@@ -48,6 +47,58 @@ class SiphonStack(Stack):
         account = Stack.of(self).account
         region = Stack.of(self).region
 
+### S3 DEPLOYMENT ###
+
+        script_name = 'siphon-'+str(account)+'-scripts-'+region
+
+        os.system('echo "#!/usr/bin/bash" > script/siphon.sh')
+        
+        os.system('echo "apt-get update" >> script/siphon.sh')
+        os.system('echo "apt-get upgrade -y" >> script/siphon.sh')
+        
+        os.system('echo "apt-get install python3-pip unzip -y" >> script/siphon.sh')
+        
+        os.system('echo "wget https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -P /tmp/" >> script/siphon.sh')
+        os.system('echo "unzip /tmp/awscli-exe-linux-x86_64.zip -d /tmp" >> script/siphon.sh')
+        os.system('echo "/tmp/aws/install" >> script/siphon.sh')
+        
+        os.system('echo "aws s3 cp s3://'+script_name+'/patch-reboot.sh /root/patch-reboot.sh" >> script/siphon.sh')
+        os.system('echo "chmod 750 /root/patch-reboot.sh" >> script/siphon.sh')
+        
+        os.system('echo "aws s3 cp s3://'+script_name+'/crontab.txt /tmp/crontab.txt" >> script/siphon.sh')
+        os.system('echo "cat /tmp/crontab.txt >> /etc/crontab" >> script/siphon.sh')
+        
+        os.system('echo "DEBIAN_FRONTEND=noninteractive apt-get install postfix -y" >> script/siphon.sh')
+        os.system('echo "echo \'deb http://download.opensuse.org/repositories/security:/zeek/xUbuntu_20.04/ /\' | sudo tee /etc/apt/sources.list.d/security:zeek.list" >> script/siphon.sh')
+        os.system('echo "curl -fsSL https://download.opensuse.org/repositories/security:zeek/xUbuntu_20.04/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/security_zeek.gpg > /dev/null" >> script/siphon.sh')
+        os.system('echo "apt-get update" >> script/siphon.sh')
+        os.system('echo "apt-get install zeek-lts -y" >> script/siphon.sh')
+        
+        os.system('echo "add-apt-repository ppa:oisf/suricata-stable -y" >> script/siphon.sh')
+        os.system('echo "apt-get update" >> script/siphon.sh')
+        os.system('echo "apt-get install suricata -y" >> script/siphon.sh')
+        
+        os.system('echo "pip3 install boto3 requests" >> script/siphon.sh')
+        os.system('echo "aws s3 cp s3://'+script_name+'/siphon.py /tmp/siphon.py" >> script/siphon.sh')
+        os.system('echo "/usr/bin/python3 /tmp/siphon.py" >> script/siphon.sh')
+
+        script = _s3.Bucket(
+            self, 'script',
+            bucket_name = script_name,
+            encryption = _s3.BucketEncryption.KMS_MANAGED,
+            block_public_access = _s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy = RemovalPolicy.DESTROY,
+            auto_delete_objects = True,
+            versioned = True
+        )
+
+        scripts = _deployment.BucketDeployment(
+            self, 'scripts',
+            sources = [_deployment.Source.asset('script')],
+            destination_bucket = script,
+            prune = False
+        )
+
 ### VPC ###
 
         vpc = _ec2.Vpc.from_lookup(
@@ -67,6 +118,18 @@ class SiphonStack(Stack):
         role.add_managed_policy(
             _iam.ManagedPolicy.from_aws_managed_policy_name(
                 'AmazonSSMManagedInstanceCore'
+            )
+        )
+
+        role.add_to_policy(
+            _iam.PolicyStatement(
+                actions = [
+                    's3:GetObject'
+                ],
+                resources = [
+                    script.bucket_arn,
+                    script.arn_for_objects('*')
+                ]
             )
         )
 
@@ -107,6 +170,7 @@ class SiphonStack(Stack):
             }
         )
 
+        instanceids = []
         for subnetid in subnetids:
             subnet = _ec2.Subnet.from_subnet_id(
                 self, subnetid,
@@ -140,6 +204,7 @@ class SiphonStack(Stack):
                         )
                     ]
                 )
+                instanceids.append(instance.instance_id)
                 network = _ec2.CfnNetworkInterface(
                     self, 'instance-'+subnetid+'-'+str(i)+'-monitor',
                     subnet_id = subnetid,
@@ -160,6 +225,59 @@ class SiphonStack(Stack):
                     tier = _ssm.ParameterTier.STANDARD,
                 )
 
-### CDK NAG ###
+### CONFIGURATION ###
 
-        #Aspects.of(self).add(cdk_nag.AwsSolutionsChecks())
+        config = _iam.Role(
+            self, 'config', 
+            assumed_by = _iam.ServicePrincipal(
+                'lambda.amazonaws.com'
+            )
+        )
+        
+        config.add_managed_policy(
+            _iam.ManagedPolicy.from_aws_managed_policy_name(
+                'service-role/AWSLambdaBasicExecutionRole'
+            )
+        )
+        
+        config.add_to_policy(
+            _iam.PolicyStatement(
+                actions = [
+                    'ssm:SendCommand'
+                ],
+                resources = [
+                    '*'
+                ]
+            )
+        )
+
+        configuration = _lambda.Function(
+            self, 'configuration',
+            code = _lambda.Code.from_asset('configuration'),
+            handler = 'configuration.handler',
+            runtime = _lambda.Runtime.PYTHON_3_9,
+            timeout = Duration.seconds(30),
+            environment = dict(
+                INSTANCE = str(instanceids),
+                SCRIPTS3 = script_name
+            ),
+            memory_size = 128,
+            role = config
+        )
+       
+        configlogs = _logs.LogGroup(
+            self, 'configlogs',
+            log_group_name = '/aws/lambda/'+configuration.function_name,
+            retention = _logs.RetentionDays.ONE_DAY,
+            removal_policy = RemovalPolicy.DESTROY
+        )
+
+        provider = _custom.Provider(
+            self, 'provider',
+            on_event_handler = configuration
+        )
+
+        resource = CustomResource(
+            self, 'resource',
+            service_token = provider.service_token
+        )
