@@ -6,6 +6,7 @@ from subprocess import run
 # EBS DATA STORAGE
 #
 
+os.system('mkfs -t ext4 /dev/nvme1n1')
 os.system('mkdir /data')
 
 ebs = run( [ 'blkid' ], capture_output=True )
