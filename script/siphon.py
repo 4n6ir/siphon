@@ -160,7 +160,7 @@ f.write('#!/usr/bin/bash\n')
 
 for net in inet:
     f.write('/usr/sbin/ip link set ens'+net[3:]+' up\n')
-    f.write('/usr/sbin/ip link set ens'+net[3:]+' mtu 1575\n')
+    f.write('/usr/sbin/ip link set ens'+net[3:]+' mtu 9100\n')
     f.write('/usr/sbin/ethtool --offload ens'+net[3:]+' tx off\n')
 
 f.write('/opt/zeek/bin/zeekctl start\n')
