@@ -39,6 +39,17 @@ for net in inet:
 
 ### ZEEK CONFIGURATION ###
 
+os.system('cp /opt/zeek/etc/zeekctl.cfg /opt/zeek/etc/zeekctl.cfg.bkp')
+
+f = open('/opt/zeek/etc/zeekctl.cfg', 'r')
+data = f.read()
+data = data.replace("/opt/zeek/logs","/data")
+f.close()
+
+f = open('/opt/zeek/etc/zeekctl.cfg', 'w')
+f.write(data)
+f.close()   
+
 os.system('cp /opt/zeek/etc/node.cfg /opt/zeek/etc/node.cfg.bkp')
 
 f = open('/opt/zeek/etc/node.cfg','w')
@@ -125,11 +136,12 @@ os.system('touch /root/'+bucket)
 os.system('cp /etc/crontab /etc/crontab.bkp')
 
 f = open('/etc/crontab','a')
+f.write('#\n')
 f.write('*/5 * * * * root /opt/zeek/bin/zeekctl cron\n')
-f.write('*/15 * * * * root /usr/local/bin/aws s3 sync /opt/zeek/logs s3://'+bucket+'/`hostname` --exclude "*" --include "*.log.gz"\n')
+f.write('*/15 * * * * root /usr/local/bin/aws s3 sync /data s3://'+bucket+'/`hostname` --exclude "*" --include "*.log.gz"\n')
 f.write('0 11 * * * root /usr/bin/suricata-update\n')
 f.write('15 11 * * * root /usr/bin/systemctl restart suricata\n')
-f.write('0 * * * * root /usr/bin/find /opt/zeek/logs/* -mtime +7 -type f -name "*.log.gz" -delete\n')
+f.write('0 * * * * root /usr/bin/find /data/* -mtime +7 -type f -name "*.log.gz" -delete\n')
 f.write('#')
 f.close()
 
