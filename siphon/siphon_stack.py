@@ -316,11 +316,15 @@ class SiphonStack(Stack):
         role.add_to_policy(
             _iam.PolicyStatement(
                 actions = [
+                    's3:GetBucketAcl',
                     's3:GetBucketLocation',
-                    's3:ListBucket'
+                    's3:GetObject',
+                    's3:ListBucket',
+                    's3:PutObject'
                 ],
                 resources = [
-                    script.bucket_arn
+                    bucket.bucket_arn,
+                    bucket.arn_for_objects('*')
                 ]
             )
         )
@@ -328,8 +332,7 @@ class SiphonStack(Stack):
         role.add_to_policy(
             _iam.PolicyStatement(
                 actions = [
-                    's3:GetObject',
-                    's3:PutObject'
+                    's3:GetObject'
                 ],
                 resources = [
                     script.bucket_arn,
