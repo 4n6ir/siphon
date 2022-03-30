@@ -7,8 +7,6 @@ from aws_cdk import (
     Stack,
     aws_dynamodb as _dynamodb,
     aws_ec2 as _ec2,
-    aws_events as _events,
-    aws_events_targets as _targets,
     aws_iam as _iam,
     aws_lambda as _lambda,
     aws_lambda_event_sources as _sources,
@@ -46,6 +44,75 @@ class SiphonStack(Stack):
 
         account = Stack.of(self).account
         region = Stack.of(self).region
+        
+        bucket_name = 'siphon-'+account+'-'+region+'-'+vpc_id
+        archive_name = 'siphon-parquet-'+account+'-'+region+'-'+vpc_id
+        athena_name = 'siphon-athena-'+account+'-'+region+'-'+vpc_id
+
+### DYNAMODB ###
+
+        data = _dynamodb.Table(
+            self, 'data',
+            partition_key = {
+                'name': 'pk',
+                'type': _dynamodb.AttributeType.STRING
+            },
+            sort_key = {
+                'name': 'sk',
+                'type': _dynamodb.AttributeType.STRING
+            },
+            billing_mode = _dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy = RemovalPolicy.DESTROY,
+            point_in_time_recovery = True
+        )
+
+        status = _ssm.StringParameter(
+            self, 'status',
+            description = 'Siphon Parser Status',
+            parameter_name = '/siphon/dynamodb/data',
+            string_value = data.table_name,
+            tier = _ssm.ParameterTier.STANDARD,
+        )
+
+### S3 BUCKETS ###
+
+        bucket = _s3.Bucket(
+            self, 'bucket',
+            bucket_name = bucket_name,
+            encryption = _s3.BucketEncryption.KMS_MANAGED,
+            block_public_access = _s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy = RemovalPolicy.DESTROY,
+            auto_delete_objects = True,
+            versioned = True
+        )
+
+        pcap = _ssm.StringParameter(
+            self, 'pcap',
+            description = 'Siphon Zeek Bucket',
+            parameter_name = '/siphon/'+vpc_id+'/bucket',
+            string_value = bucket_name,
+            tier = _ssm.ParameterTier.STANDARD
+        )
+
+        archive = _s3.Bucket(
+            self, 'archive',
+            bucket_name = archive_name,
+            encryption = _s3.BucketEncryption.KMS_MANAGED,
+            block_public_access = _s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy = RemovalPolicy.DESTROY,
+            auto_delete_objects = True,
+            versioned = True
+        )
+
+        athena = _s3.Bucket(
+            self, 'athena',
+            bucket_name = athena_name,
+            encryption = _s3.BucketEncryption.KMS_MANAGED,
+            block_public_access = _s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy = RemovalPolicy.DESTROY,
+            auto_delete_objects = True,
+            versioned = True
+        )
 
 ### S3 DEPLOYMENT ###
 
@@ -56,7 +123,7 @@ class SiphonStack(Stack):
         os.system('echo "apt-get update" >> script/siphon.sh')
         os.system('echo "apt-get upgrade -y" >> script/siphon.sh')
         
-        os.system('echo "apt-get install python3-pip unzip -y" >> script/siphon.sh')
+        os.system('echo "apt-get install cmake gdb python3-pip unzip -y" >> script/siphon.sh')
         
         os.system('echo "wget https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -P /tmp/" >> script/siphon.sh')
         os.system('echo "unzip /tmp/awscli-exe-linux-x86_64.zip -d /tmp" >> script/siphon.sh')
@@ -77,6 +144,10 @@ class SiphonStack(Stack):
         os.system('echo "add-apt-repository ppa:oisf/suricata-stable -y" >> script/siphon.sh')
         os.system('echo "apt-get update" >> script/siphon.sh')
         os.system('echo "apt-get install suricata -y" >> script/siphon.sh')
+        
+        os.system('echo "cd /tmp && git clone https://github.com/J-Gras/zeek-af_packet-plugin" >> script/siphon.sh')
+        os.system('echo "cd /tmp/zeek-af_packet-plugin && export PATH=/opt/zeek/bin:$PATH && ./configure && make && make install" >> script/siphon.sh')
+        os.system('echo "/opt/zeek/bin/zeek -NN Zeek::AF_Packet" >> script/siphon.sh')
         
         os.system('echo "pip3 install boto3 requests" >> script/siphon.sh')
         os.system('echo "aws s3 cp s3://'+script_name+'/siphon.py /tmp/siphon.py" >> script/siphon.sh')
@@ -99,6 +170,105 @@ class SiphonStack(Stack):
             prune = False
         )
 
+### PARSER ###
+
+        zeek = _iam.Role(
+            self, 'zeek', 
+            assumed_by = _iam.ServicePrincipal(
+                'lambda.amazonaws.com'
+            )
+        )
+        
+        zeek.add_managed_policy(
+            _iam.ManagedPolicy.from_aws_managed_policy_name(
+                'service-role/AWSLambdaBasicExecutionRole'
+            )
+        )
+        
+        zeek.add_to_policy(
+            _iam.PolicyStatement(
+                actions = [
+                    'dynamodb:PutItem'
+                ],
+                resources = [
+                    data.table_arn
+                ]
+            )
+        )
+        
+        zeek.add_to_policy(
+            _iam.PolicyStatement(
+                actions = [
+                    's3:GetObject'
+                ],
+                resources = [
+                    bucket.bucket_arn,
+                    bucket.arn_for_objects('*')
+                ]
+            )
+        )
+
+        zeek.add_to_policy(
+            _iam.PolicyStatement(
+                actions = [
+                    's3:PutObject'
+                ],
+                resources = [
+                    archive.bucket_arn,
+                    archive.arn_for_objects('*')
+                ]
+            )
+        )
+
+        parser = _lambda.DockerImageFunction(
+            self, 'parser',
+            code = _lambda.DockerImageCode.from_image_asset('parser'),
+            timeout = Duration.seconds(900),
+            role = zeek,
+            environment = dict(
+                DYNAMODB = data.table_name,
+                S3BUCKET = bucket.bucket_name,
+                S3ARCHIVE = archive.bucket_name
+            ),
+            memory_size = 128
+        )
+
+        history = _logs.LogGroup(
+            self, 'history',
+            log_group_name = '/aws/lambda/'+parser.function_name,
+            retention = _logs.RetentionDays.ONE_DAY,
+            removal_policy = RemovalPolicy.DESTROY
+        )
+        
+        queue = _sqs.Queue(
+            self, 'queue',
+            visibility_timeout = Duration.seconds(1800)
+        )
+        
+        queue.grant_consume_messages(parser)
+
+        parser.add_event_source(
+            _sources.SqsEventSource(
+                queue = queue
+            )
+        )
+
+        topic = _sns.Topic(
+            self, 'topic'
+        )
+        
+        topic.add_subscription(
+            _subscriptions.SqsSubscription(
+                queue,
+                raw_message_delivery = True
+            )
+        )
+        
+        bucket.add_event_notification(
+            _s3.EventType.OBJECT_CREATED, 
+            _notifications.SnsDestination(topic)
+        )
+
 ### VPC ###
 
         vpc = _ec2.Vpc.from_lookup(
@@ -118,6 +288,28 @@ class SiphonStack(Stack):
         role.add_managed_policy(
             _iam.ManagedPolicy.from_aws_managed_policy_name(
                 'AmazonSSMManagedInstanceCore'
+            )
+        )
+
+        role.add_to_policy(
+            _iam.PolicyStatement(
+                actions = [
+                    'ec2:DescribeInstances'
+                ],
+                resources = [
+                    '*'
+                ]
+            )
+        )
+
+        role.add_to_policy(
+            _iam.PolicyStatement(
+                actions = [
+                    'ssm:GetParameter'
+                ],
+                resources = [
+                    pcap.parameter_arn
+                ]
             )
         )
 
