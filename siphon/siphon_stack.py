@@ -145,6 +145,11 @@ class SiphonStack(Stack):
         os.system('echo "apt-get update" >> script/siphon.sh')
         os.system('echo "apt-get install suricata -y" >> script/siphon.sh')
         
+        os.system('echo "aws s3 cp s3://'+script_name+'/suricata.json /root/suricata.json" >> script/siphon.sh')
+        os.system('echo "cd /tmp && wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb" >> script/siphon.sh')
+        os.system('echo "cd /tmp && dpkg -i amazon-cloudwatch-agent.deb" >> script/siphon.sh')
+        os.system('echo "/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/root/suricata.json" >> script/siphon.sh')
+
         os.system('echo "cd /tmp && git clone https://github.com/J-Gras/zeek-af_packet-plugin" >> script/siphon.sh')
         os.system('echo "cd /tmp/zeek-af_packet-plugin && export PATH=/opt/zeek/bin:$PATH && ./configure && make && make install" >> script/siphon.sh')
         os.system('echo "/opt/zeek/bin/zeek -NN Zeek::AF_Packet" >> script/siphon.sh')
@@ -296,6 +301,12 @@ class SiphonStack(Stack):
         role.add_managed_policy(
             _iam.ManagedPolicy.from_aws_managed_policy_name(
                 'AmazonSSMManagedInstanceCore'
+            )
+        )
+
+        role.add_managed_policy(
+            _iam.ManagedPolicy.from_aws_managed_policy_name(
+                'CloudWatchAgentServerPolicy'
             )
         )
 

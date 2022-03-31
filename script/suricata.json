@@ -1,0 +1,14 @@
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/suricata/fast.log",
+            "log_group_name": "/var/log/suricata/fast.log"
+          }
+        ]
+      }
+    }
+  }
+}
