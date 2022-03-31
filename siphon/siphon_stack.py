@@ -239,7 +239,15 @@ class SiphonStack(Stack):
             retention = _logs.RetentionDays.ONE_DAY,
             removal_policy = RemovalPolicy.DESTROY
         )
-        
+
+        parsermonitor = _ssm.StringParameter(
+            self, 'parsermonitor',
+            description = 'Siphon Parser Monitor',
+            parameter_name = '/siphon/monitor/parser',
+            string_value = '/aws/lambda/'+parser.function_name,
+            tier = _ssm.ParameterTier.STANDARD,
+        )
+
         queue = _sqs.Queue(
             self, 'queue',
             visibility_timeout = Duration.seconds(1800)
@@ -478,6 +486,14 @@ class SiphonStack(Stack):
             log_group_name = '/aws/lambda/'+configuration.function_name,
             retention = _logs.RetentionDays.ONE_DAY,
             removal_policy = RemovalPolicy.DESTROY
+        )
+
+        configmonitor = _ssm.StringParameter(
+            self, 'configmonitor',
+            description = 'Siphon Config Monitor',
+            parameter_name = '/siphon/monitor/config',
+            string_value = '/aws/lambda/'+configuration.function_name,
+            tier = _ssm.ParameterTier.STANDARD,
         )
 
         provider = _custom.Provider(

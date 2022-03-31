@@ -78,8 +78,8 @@ def handler(event, context):
         zeek_df.to_parquet('/tmp/transfer.parquet', compression='snappy', use_deprecated_int96_timestamps=True)
     
         logger.info('UPLOAD: '+objectname)
-        
-        s3.upload_file('/tmp/transfer.parquet', os.environ['S3ARCHIVE'], output[0]+'/'+partitions[0]+'/'+partitions[1]+'/'+partitions[2]+'/'+parsed[0]+'/'+parsed[2]+'.parquet')
+
+        s3.upload_file('/tmp/transfer.parquet', os.environ['S3ARCHIVE'], 'service='+output[0]+'/year='+partitions[0]+'/month='+partitions[1]+'/day='+partitions[2]+'/host='+parsed[0]+'/'+parsed[2]+'.parquet')
     
         logger.info('RECORD: '+objectname)
     
