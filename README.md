@@ -50,6 +50,7 @@ A two-stage configuration script to install and configure a stand-alone packet c
 
 - af_packet - https://github.com/J-Gras/zeek-af_packet-plugin
 - awscliv2 - https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html
+- cwagent - https://github.com/aws/amazon-cloudwatch-agent
 - suricata - https://suricata.readthedocs.io/en/suricata-6.0.0/install.html#ubuntu
 - zeek - https://github.com/zeek/zeek/wiki/Binary-Packages
 
