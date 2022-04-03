@@ -19,7 +19,6 @@ class SiphonParser(Stack):
 
         account = Stack.of(self).account
         region = Stack.of(self).region
-
         archive_name = 'siphon-parquet-'+account+'-'+region+'-'+vpc_id
 
 ### IAM ROLE ###
@@ -55,7 +54,7 @@ class SiphonParser(Stack):
             self, 'database',
             catalog_id = account,
             database_input = _glue.CfnDatabase.DatabaseInputProperty(
-                name = 'siphon'
+                name = 'siphon_'+vpc_id.replace('-','_')
             )
         )
 
@@ -64,33 +63,19 @@ class SiphonParser(Stack):
         conn = _glue.CfnTable(
             self, 'conn',
             catalog_id = account,
-            database_name = 'siphon',
+            database_name = 'siphon_'+vpc_id.replace('-','_'),
             table_input = _glue.CfnTable.TableInputProperty(
-                name = 'conn',
-                partition_keys = [
-                    _glue.CfnTable.ColumnProperty(
-                        name = 'year',
-                        type = 'string'
-                    ),
-                    _glue.CfnTable.ColumnProperty(
-                        name = 'month',
-                        type = 'string'
-                    ),
-                    _glue.CfnTable.ColumnProperty(
-                        name = 'day',
-                        type = 'string'
-                    ),
-                    _glue.CfnTable.ColumnProperty(
-                        name = 'host',
-                        type = 'string'
-                    )
-                ],
+                name = 'conn_'+vpc_id.replace('-','_'),
+                parameters = {
+                    'classification': 'parquet'
+                },
+                partition_keys = [],
                 storage_descriptor = _glue.CfnTable.StorageDescriptorProperty(
                     input_format = 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat',
                     location = 's3://'+archive_name+'/service=conn/',
                     output_format = 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat',
                     serde_info = _glue.CfnTable.SerdeInfoProperty(
-                        serialization_library = 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe',
+                        serialization_library = 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
                     ),
                     columns = [
                         _glue.CfnTable.ColumnProperty( #1
