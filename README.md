@@ -20,7 +20,10 @@ Three great open-source network security monitoring solutions in alphabetical or
 
 Siphon was built using the Cloud Deployment Kit (CDK) to attach an instance with minimum specifications to an existing VPC that performs network security monitoring using Suricata and Zeek with S3 storage.
 
-Minimum requirements are network connectivity to the monitored resource with an instance that has 2 vCPUs, 2 GiB Memory, and 8 GB Storage --> https://github.com/jblukach/siphon/blob/main/siphon/siphon_stack.py#L33.
+Minimum requirements are network connectivity to the monitored resource with an instance that has 2 vCPUs, 2 GiB Memory, and 8 GB Storage.
+
+- https://github.com/jblukach/siphon/blob/main/siphon/siphon_stack.py#L33.
+- https://github.com/jblukach/siphon/blob/main/siphon/siphon_parser.py#L16
 
 ```
 vpc_id = 'vpc-04eae279ceb94d7f6'    # <-- Enter VPC ID
@@ -30,7 +33,9 @@ ebs_root = 8                        # <-- Enter Root Storage GBs
 ebs_data = 4                        # <-- Enter Data Storage GBs
 ```
 
-A network monitoring interface is attached to every subnet in the configured VPC based on the availability zone --> https://github.com/jblukach/siphon/blob/main/siphon/siphon_stack.py#L386.
+A network monitoring interface is attached to every subnet in the configured VPC based on the availability zone. 
+
+- https://github.com/jblukach/siphon/blob/main/siphon/siphon_stack.py#L386
 
 Ubuntu 20.04 was used for long-term support and software dependencies but does not have AWS CLI installed by default requiring a second installation stage using the SSM agent.
 
@@ -43,6 +48,20 @@ https://github.com/SuperCowPowers/zat
 ### ATHENA
 
 The S3 bucket containing the Parquet files is partitioned by Zeek log, year, month, day, and hostname to limit search volume since it is billed by the terabyte (TB).
+
+https://docs.zeek.org/en/master/script-reference/log-files.html
+
+- conn.log
+- dhcp.log
+- dns.log
+- dpd.log
+- files.log
+- http.log
+- ntp.log
+- ssl.log
+- tunnel.log
+- weird.log
+- x509.log
 
 ### SOFTWARE
 
