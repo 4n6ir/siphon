@@ -25,7 +25,6 @@ class SiphonParser(Stack):
 
         glue = _iam.Role(
             self, 'glue',
-            role_name = 'secops-centralized-cloudfront-logs',
             assumed_by = _iam.ServicePrincipal('glue.amazonaws.com')
         ) 
 
