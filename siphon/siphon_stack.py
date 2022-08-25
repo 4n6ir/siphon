@@ -1,4 +1,6 @@
+import boto3
 import os
+import sys
 
 from aws_cdk import (
     CustomResource,
@@ -11,6 +13,7 @@ from aws_cdk import (
     aws_lambda as _lambda,
     aws_lambda_event_sources as _sources,
     aws_logs as _logs,
+    aws_logs_destinations as _destinations,
     aws_s3 as _s3,
     aws_s3_deployment as _deployment,
     aws_s3_notifications as _notifications,
@@ -30,7 +33,7 @@ class SiphonStack(Stack):
 
 ################################################################################
 
-        vpc_id = 'vpc-04eae279ceb94d7f6'    # <-- Enter VPC ID
+        vpc_id = 'vpc-0aa03892e4dcb8332'    # <-- Enter VPC ID
         
         ec2_count = 1                       # <-- Enter EC2 Quantity
         
@@ -48,6 +51,24 @@ class SiphonStack(Stack):
         bucket_name = 'siphon-'+account+'-'+region+'-'+vpc_id
         archive_name = 'siphon-parquet-'+account+'-'+region+'-'+vpc_id
         athena_name = 'siphon-athena-'+account+'-'+region+'-'+vpc_id
+
+        try:
+            client = boto3.client('account')
+            operations = client.get_alternate_contact(
+                AlternateContactType='OPERATIONS'
+            )
+        except:
+            print('Missing IAM Permission --> account:GetAlternateContact')
+            sys.exit(1)
+            pass
+
+        operationstopic = _sns.Topic(
+            self, 'operationstopic'
+        )
+
+        operationstopic.add_subscription(
+            _subscriptions.EmailSubscription(operations['AlternateContact']['EmailAddress'])
+        )
 
 ### DYNAMODB ###
 
@@ -175,6 +196,53 @@ class SiphonStack(Stack):
             prune = False
         )
 
+### ERROR ###
+
+        errorrole = _iam.Role(
+            self, 'errorrole', 
+            assumed_by = _iam.ServicePrincipal(
+                'lambda.amazonaws.com'
+            )
+        )
+
+        errorrole.add_managed_policy(
+            _iam.ManagedPolicy.from_aws_managed_policy_name(
+                'service-role/AWSLambdaBasicExecutionRole'
+            )
+        )
+
+        errorrole.add_to_policy(
+            _iam.PolicyStatement(
+                actions = [
+                    'sns:Publish'
+                ],
+                resources = [
+                    operationstopic.topic_arn
+                ]
+            )
+        )
+
+        error = _lambda.Function(
+            self, 'error',
+            runtime = _lambda.Runtime.PYTHON_3_9,
+            code = _lambda.Code.from_asset('error'),
+            handler = 'error.handler',
+            role = errorrole,
+            environment = dict(
+                SNS_TOPIC = operationstopic.topic_arn
+            ),
+            architecture = _lambda.Architecture.ARM_64,
+            timeout = Duration.seconds(7),
+            memory_size = 128
+        )
+
+        errormonitor = _logs.LogGroup(
+            self, 'errormonitor',
+            log_group_name = '/aws/lambda/'+error.function_name,
+            retention = _logs.RetentionDays.ONE_DAY,
+            removal_policy = RemovalPolicy.DESTROY
+        )
+
 ### PARSER ###
 
         zeek = _iam.Role(
@@ -245,12 +313,18 @@ class SiphonStack(Stack):
             removal_policy = RemovalPolicy.DESTROY
         )
 
-        parsermonitor = _ssm.StringParameter(
-            self, 'parsermonitor',
-            description = 'Siphon Parser Monitor',
-            parameter_name = '/siphon/monitor/parser',
-            string_value = '/aws/lambda/'+parser.function_name,
-            tier = _ssm.ParameterTier.STANDARD,
+        parsersub = _logs.SubscriptionFilter(
+            self, 'parsersub',
+            log_group = history,
+            destination = _destinations.LambdaDestination(error),
+            filter_pattern = _logs.FilterPattern.all_terms('ERROR')
+        )
+
+        parsertime= _logs.SubscriptionFilter(
+            self, 'parsertime',
+            log_group = history,
+            destination = _destinations.LambdaDestination(error),
+            filter_pattern = _logs.FilterPattern.all_terms('Task','timed','out')
         )
 
         queue = _sqs.Queue(
@@ -376,15 +450,15 @@ class SiphonStack(Stack):
             allow_all_outbound = True
         )
         monitor.add_ingress_rule(_ec2.Peer.any_ipv4(), _ec2.Port.udp(4789), 'siphon-monitor-eni')
-    
-        sgids = []
-        sgids.append(monitor.security_group_id)
 
 ### SUBNET ###
 
         subnetids = []
         for subnet in vpc.public_subnets: # vpc.private_subnets
-            subnetids.append(subnet.subnet_id)
+            subnetid = {}
+            subnetid['subnet_id'] = subnet.subnet_id
+            subnetid['availability_zone'] = subnet.availability_zone
+            subnetids.append(subnetid)
 
 ### EC2 ###
 
@@ -399,17 +473,20 @@ class SiphonStack(Stack):
 
         instanceids = []
         for subnetid in subnetids:
-            subnet = _ec2.Subnet.from_subnet_id(
-                self, subnetid,
-                subnet_id = subnetid
+            subnet = _ec2.Subnet.from_subnet_attributes(
+                self, subnetid['subnet_id'],
+                subnet_id = subnetid['subnet_id'],
+                availability_zone = subnetid['availability_zone']
             )
             for i in range(ec2_count):
                 instance = _ec2.Instance(
-                    self, 'instance-'+subnetid+'-'+str(i),
+                    self, 'instance-'+subnetid['subnet_id']+'-'+str(i),
                     instance_type = _ec2.InstanceType(ec2_type),
                     machine_image = ubuntu,
                     vpc = vpc,
-                    vpc_subnets = subnet,
+                    vpc_subnets = _ec2.SubnetSelection(
+                        subnets = [subnet]
+                    ),
                     role = role,
                     security_group = management,
                     require_imdsv2 = True,
@@ -433,21 +510,25 @@ class SiphonStack(Stack):
                 )
                 instanceids.append(instance.instance_id)
                 network = _ec2.CfnNetworkInterface(
-                    self, 'instance-'+subnetid+'-'+str(i)+'-monitor',
-                    subnet_id = subnetid,
-                    group_set = sgids
+                    self, 'instance-'+subnetid['subnet_id']+'-'+str(i)+'-monitor',
+                    subnet_id = subnet.subnet_id,
+                    group_set = [
+                        monitor.security_group_id
+                    ],
+                    interface_type = 'interface',
+                    source_dest_check = False
                 )
                 attach = _ec2.CfnNetworkInterfaceAttachment(
-                    self, 'instance-'+subnetid+'-'+str(i)+'-attach',
+                    self, 'instance-'+subnetid['subnet_id']+'-'+str(i)+'-attach',
                     device_index = str(1),
                     instance_id = instance.instance_id,
                     network_interface_id = network.ref,
                     delete_on_termination = True
                 )
                 mirror = _ssm.StringParameter(
-                    self, 'instance-'+subnetid+'-'+str(i)+'-mirror',
+                    self, 'instance-'+subnetid['subnet_id']+'-'+str(i)+'-mirror',
                     description = 'Siphon ENI Target Mirror(s)',
-                    parameter_name = '/siphon/mirror/'+vpc_id+'/'+subnetid+'/instance'+str(i),
+                    parameter_name = '/siphon/mirror/'+vpc_id+'/'+subnetid['subnet_id']+'/instance'+str(i),
                     string_value = network.ref,
                     tier = _ssm.ParameterTier.STANDARD,
                 )
@@ -499,12 +580,18 @@ class SiphonStack(Stack):
             removal_policy = RemovalPolicy.DESTROY
         )
 
-        configmonitor = _ssm.StringParameter(
-            self, 'configmonitor',
-            description = 'Siphon Config Monitor',
-            parameter_name = '/siphon/monitor/config',
-            string_value = '/aws/lambda/'+configuration.function_name,
-            tier = _ssm.ParameterTier.STANDARD,
+        configsub = _logs.SubscriptionFilter(
+            self, 'configsub',
+            log_group = configlogs,
+            destination = _destinations.LambdaDestination(error),
+            filter_pattern = _logs.FilterPattern.all_terms('ERROR')
+        )
+
+        configtime= _logs.SubscriptionFilter(
+            self, 'configtime',
+            log_group = configlogs,
+            destination = _destinations.LambdaDestination(error),
+            filter_pattern = _logs.FilterPattern.all_terms('Task','timed','out')
         )
 
         provider = _custom.Provider(
