@@ -1,6 +1,4 @@
-import boto3
 import os
-import sys
 
 from aws_cdk import (
     CustomResource,
@@ -13,7 +11,6 @@ from aws_cdk import (
     aws_lambda as _lambda,
     aws_lambda_event_sources as _sources,
     aws_logs as _logs,
-    aws_logs_destinations as _destinations,
     aws_s3 as _s3,
     aws_s3_deployment as _deployment,
     aws_s3_notifications as _notifications,
@@ -51,24 +48,6 @@ class SiphonStack(Stack):
         bucket_name = 'siphon-'+account+'-'+region+'-'+vpc_id
         archive_name = 'siphon-parquet-'+account+'-'+region+'-'+vpc_id
         athena_name = 'siphon-athena-'+account+'-'+region+'-'+vpc_id
-
-        try:
-            client = boto3.client('account')
-            operations = client.get_alternate_contact(
-                AlternateContactType='OPERATIONS'
-            )
-        except:
-            print('Missing IAM Permission --> account:GetAlternateContact')
-            sys.exit(1)
-            pass
-
-        operationstopic = _sns.Topic(
-            self, 'operationstopic'
-        )
-
-        operationstopic.add_subscription(
-            _subscriptions.EmailSubscription(operations['AlternateContact']['EmailAddress'])
-        )
 
 ### DYNAMODB ###
 
@@ -113,16 +92,6 @@ class SiphonStack(Stack):
             parameter_name = '/siphon/'+vpc_id+'/bucket',
             string_value = bucket_name,
             tier = _ssm.ParameterTier.STANDARD
-        )
-
-        archive = _s3.Bucket(
-            self, 'archive',
-            bucket_name = archive_name,
-            encryption = _s3.BucketEncryption.KMS_MANAGED,
-            block_public_access = _s3.BlockPublicAccess.BLOCK_ALL,
-            removal_policy = RemovalPolicy.DESTROY,
-            auto_delete_objects = True,
-            versioned = True
         )
 
         athena = _s3.Bucket(
@@ -196,53 +165,6 @@ class SiphonStack(Stack):
             prune = False
         )
 
-### ERROR ###
-
-        errorrole = _iam.Role(
-            self, 'errorrole', 
-            assumed_by = _iam.ServicePrincipal(
-                'lambda.amazonaws.com'
-            )
-        )
-
-        errorrole.add_managed_policy(
-            _iam.ManagedPolicy.from_aws_managed_policy_name(
-                'service-role/AWSLambdaBasicExecutionRole'
-            )
-        )
-
-        errorrole.add_to_policy(
-            _iam.PolicyStatement(
-                actions = [
-                    'sns:Publish'
-                ],
-                resources = [
-                    operationstopic.topic_arn
-                ]
-            )
-        )
-
-        error = _lambda.Function(
-            self, 'error',
-            runtime = _lambda.Runtime.PYTHON_3_9,
-            code = _lambda.Code.from_asset('error'),
-            handler = 'error.handler',
-            role = errorrole,
-            environment = dict(
-                SNS_TOPIC = operationstopic.topic_arn
-            ),
-            architecture = _lambda.Architecture.ARM_64,
-            timeout = Duration.seconds(7),
-            memory_size = 128
-        )
-
-        errormonitor = _logs.LogGroup(
-            self, 'errormonitor',
-            log_group_name = '/aws/lambda/'+error.function_name,
-            retention = _logs.RetentionDays.ONE_DAY,
-            removal_policy = RemovalPolicy.DESTROY
-        )
-
 ### PARSER ###
 
         zeek = _iam.Role(
@@ -287,8 +209,8 @@ class SiphonStack(Stack):
                     's3:PutObject'
                 ],
                 resources = [
-                    archive.bucket_arn,
-                    archive.arn_for_objects('*')
+                    'arn:aws:s3:::'+archive_name,
+                    'arn:aws:s3:::'+archive_name+'/*'
                 ]
             )
         )
@@ -301,7 +223,7 @@ class SiphonStack(Stack):
             environment = dict(
                 DYNAMODB = data.table_name,
                 S3BUCKET = bucket.bucket_name,
-                S3ARCHIVE = archive.bucket_name
+                S3ARCHIVE = archive_name
             ),
             memory_size = 128
         )
@@ -313,18 +235,12 @@ class SiphonStack(Stack):
             removal_policy = RemovalPolicy.DESTROY
         )
 
-        parsersub = _logs.SubscriptionFilter(
-            self, 'parsersub',
-            log_group = history,
-            destination = _destinations.LambdaDestination(error),
-            filter_pattern = _logs.FilterPattern.all_terms('ERROR')
-        )
-
-        parsertime= _logs.SubscriptionFilter(
-            self, 'parsertime',
-            log_group = history,
-            destination = _destinations.LambdaDestination(error),
-            filter_pattern = _logs.FilterPattern.all_terms('Task','timed','out')
+        parsermonitor = _ssm.StringParameter(
+            self, 'parsermonitor',
+            description = 'Siphon Parser Monitor',
+            parameter_name = '/siphon/monitor/parser',
+            string_value = '/aws/lambda/'+parser.function_name,
+            tier = _ssm.ParameterTier.STANDARD,
         )
 
         queue = _sqs.Queue(
@@ -580,18 +496,12 @@ class SiphonStack(Stack):
             removal_policy = RemovalPolicy.DESTROY
         )
 
-        configsub = _logs.SubscriptionFilter(
-            self, 'configsub',
-            log_group = configlogs,
-            destination = _destinations.LambdaDestination(error),
-            filter_pattern = _logs.FilterPattern.all_terms('ERROR')
-        )
-
-        configtime= _logs.SubscriptionFilter(
-            self, 'configtime',
-            log_group = configlogs,
-            destination = _destinations.LambdaDestination(error),
-            filter_pattern = _logs.FilterPattern.all_terms('Task','timed','out')
+        configmonitor = _ssm.StringParameter(
+            self, 'configmonitor',
+            description = 'Siphon Config Monitor',
+            parameter_name = '/siphon/monitor/config',
+            string_value = '/aws/lambda/'+configuration.function_name,
+            tier = _ssm.ParameterTier.STANDARD,
         )
 
         provider = _custom.Provider(
