@@ -27,8 +27,10 @@ os.system('mount -a')
 inet = []
 socks = socket.if_nameindex()
 for sock in socks:
-    if sock[1] != 'ens5' and sock[1] != 'lo':
+    if sock[1] != 'docker0' and sock[1] != 'lo':
         inet.append(sock[1])
+
+inet.pop(0) # REMOVE MGMT NIC
 
 ### CONFIGURED ENI ###
 
@@ -68,7 +70,10 @@ for net in inet:
     f.write('[worker-'+net[3:]+']\n')
     f.write('type=worker\n')
     f.write('host=localhost\n')
-    f.write('interface=af_packet::ens'+net[3:]+'\n\n')
+    f.write('interface=af_packet::ens'+net[3:]+'\n')
+    f.write('af_packet_fanout_id=23\n')
+    f.write('af_packet_fanout_mode=AF_Packet::FANOUT_HASH\n')
+    f.write('af_packet_buffer_size=128*1024*1024\n\n')
 
 f.close()
 

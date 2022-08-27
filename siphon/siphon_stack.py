@@ -143,7 +143,8 @@ class SiphonStack(Stack):
         os.system('echo "cd /tmp && git clone https://github.com/J-Gras/zeek-af_packet-plugin" >> script/siphon.sh')
         os.system('echo "cd /tmp/zeek-af_packet-plugin && export PATH=/opt/zeek/bin:$PATH && ./configure && make && make install" >> script/siphon.sh')
         os.system('echo "/opt/zeek/bin/zeek -NN Zeek::AF_Packet" >> script/siphon.sh')
-        
+        os.system('echo "setcap cap_net_raw+eip /opt/zeek/bin/zeek" >> script/siphon.sh')
+
         os.system('echo "pip3 install boto3 requests" >> script/siphon.sh')
         os.system('echo "aws s3 cp s3://'+script_name+'/siphon.py /tmp/siphon.py" >> script/siphon.sh')
         os.system('echo "/usr/bin/python3 /tmp/siphon.py" >> script/siphon.sh')
@@ -225,7 +226,7 @@ class SiphonStack(Stack):
                 S3BUCKET = bucket.bucket_name,
                 S3ARCHIVE = archive_name
             ),
-            memory_size = 128
+            memory_size = 4096
         )
 
         history = _logs.LogGroup(
@@ -270,13 +271,6 @@ class SiphonStack(Stack):
         bucket.add_event_notification(
             _s3.EventType.OBJECT_CREATED, 
             _notifications.SnsDestination(topic)
-        )
-
-### VPC ###
-
-        vpc = _ec2.Vpc.from_lookup(
-            self, 'vpc',
-            vpc_id = vpc_id
         )
 
 ### IAM ###
@@ -348,6 +342,13 @@ class SiphonStack(Stack):
                     script.arn_for_objects('*')
                 ]
             )
+        )
+
+### VPC ###
+
+        vpc = _ec2.Vpc.from_lookup(
+            self, 'vpc',
+            vpc_id = vpc_id
         )
 
 ### SG ###
