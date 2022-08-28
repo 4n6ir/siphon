@@ -505,12 +505,12 @@ class SiphonStack(Stack):
             tier = _ssm.ParameterTier.STANDARD,
         )
 
-        provider = _custom.Provider(
-            self, 'provider',
-            on_event_handler = configuration
-        )
+        #provider = _custom.Provider(
+        #    self, 'provider',
+        #    on_event_handler = configuration
+        #)
 
-        resource = CustomResource(
-            self, 'resource',
-            service_token = provider.service_token
-        )
+        #resource = CustomResource(
+        #    self, 'resource',
+        #    service_token = provider.service_token
+        #)

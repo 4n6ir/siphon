@@ -160,7 +160,26 @@ class SiphonParser(Stack):
                     type = _glue.Schema.TIMESTAMP
                 )
             ],
-            data_format = _glue.DataFormat.PARQUET
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
         )
 
 ### DHCP LOG ###
@@ -233,7 +252,26 @@ class SiphonParser(Stack):
                     type = _glue.Schema.TIMESTAMP
                 )
             ],
-            data_format = _glue.DataFormat.PARQUET
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
         )
 
 ### DNS LOG ###
@@ -342,7 +380,26 @@ class SiphonParser(Stack):
                     type = _glue.Schema.TIMESTAMP
                 )
             ],
-            data_format = _glue.DataFormat.PARQUET
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
         )
 
 ### DPD LOG ###
@@ -391,7 +448,26 @@ class SiphonParser(Stack):
                     type = _glue.Schema.TIMESTAMP
                 )
             ],
-            data_format = _glue.DataFormat.PARQUET
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
         )
 
 ### FILES LOG ###
@@ -504,7 +580,26 @@ class SiphonParser(Stack):
                     type = _glue.Schema.TIMESTAMP
                 )
             ],
-            data_format = _glue.DataFormat.PARQUET
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
         )
 
 ### HTTP LOG ###
@@ -637,7 +732,26 @@ class SiphonParser(Stack):
                     type = _glue.Schema.TIMESTAMP
                 )
             ],
-            data_format = _glue.DataFormat.PARQUET
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
         )
 
 ### NTP LOG ###
@@ -726,7 +840,26 @@ class SiphonParser(Stack):
                     type = _glue.Schema.TIMESTAMP
                 )
             ],
-            data_format = _glue.DataFormat.PARQUET
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
         )
 
 ### SSL LOG ###
@@ -823,7 +956,26 @@ class SiphonParser(Stack):
                     type = _glue.Schema.TIMESTAMP
                 )
             ],
-            data_format = _glue.DataFormat.PARQUET
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
         )
 
 ### TUNNEL LOG ###
@@ -868,7 +1020,26 @@ class SiphonParser(Stack):
                     type = _glue.Schema.TIMESTAMP
                 )
             ],
-            data_format = _glue.DataFormat.PARQUET
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
         )
 
 ### WEIRD LOG ###
@@ -925,7 +1096,26 @@ class SiphonParser(Stack):
                     type = _glue.Schema.TIMESTAMP
                 )
             ],
-            data_format = _glue.DataFormat.PARQUET
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
         )
 
 ### X509 LOG ###
@@ -1018,5 +1208,24 @@ class SiphonParser(Stack):
                     type = _glue.Schema.TIMESTAMP
                 )
             ],
-            data_format = _glue.DataFormat.PARQUET
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
         )
