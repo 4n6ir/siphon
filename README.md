@@ -51,14 +51,20 @@ The S3 bucket containing the Parquet files is partitioned by Zeek log, year, mon
 
 https://docs.zeek.org/en/master/script-reference/log-files.html
 
+- capture_loss.log
 - conn.log
 - dhcp.log
 - dns.log
 - dpd.log
 - files.log
 - http.log
+- known_certs.log
+- known_services.log
+- notice.log
 - ntp.log
+- software.log
 - ssl.log
+- stats.log
 - tunnel.log
 - weird.log
 - x509.log
