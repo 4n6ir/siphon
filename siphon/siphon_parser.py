@@ -66,6 +66,62 @@ class SiphonParser(Stack):
             database_name = 'siphon_'+vpc_id.replace('-','_')
         )
 
+### CAPTURE LOSS LOG ###
+
+        capture_loss =  _glue.Table(
+            self, 'capture_loss',
+            bucket = archive,
+            database = database,
+            s3_prefix = 'service=capture_loss',
+            table_name = 'capture_loss_'+vpc_id.replace('-','_'),
+            columns = [
+                _glue.Column(
+                    name = 'acks',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'gaps',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'peer',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'percent_lost',
+                    type = _glue.Schema.DOUBLE
+                ),
+                _glue.Column(
+                    name = 'ts',
+                    type = _glue.Schema.TIMESTAMP
+                ),
+                _glue.Column(
+                    name = 'ts_delta',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
+        )
+
 ### CONN LOG ###
 
         conn =  _glue.Table(
@@ -754,6 +810,247 @@ class SiphonParser(Stack):
             enable_partition_filtering = True
         )
 
+### KNOWN CERTS LOG ###
+
+        known_certs =  _glue.Table(
+            self, 'known_certs',
+            bucket = archive,
+            database = database,
+            s3_prefix = 'service=known_certs',
+            table_name = 'known_certs_'+vpc_id.replace('-','_'),
+            columns = [
+                _glue.Column(
+                    name = 'host',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'issuer_subject',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'port_num',
+                    type = _glue.Schema.SMALL_INT
+                ),
+                _glue.Column(
+                    name = 'serial',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'subject',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'ts',
+                    type = _glue.Schema.TIMESTAMP
+                )
+            ],
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
+        )
+
+### KNOWN SERVICES LOG ###
+
+        known_services =  _glue.Table(
+            self, 'known_services',
+            bucket = archive,
+            database = database,
+            s3_prefix = 'service=known_services',
+            table_name = 'known_services_'+vpc_id.replace('-','_'),
+            columns = [
+                _glue.Column(
+                    name = 'host',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'port_num',
+                    type = _glue.Schema.SMALL_INT
+                ),
+                _glue.Column(
+                    name = 'port_proto',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'service',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'ts',
+                    type = _glue.Schema.TIMESTAMP
+                )
+            ],
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
+        )
+
+### NOTICE LOG ###
+
+        notice =  _glue.Table(
+            self, 'notice',
+            bucket = archive,
+            database = database,
+            s3_prefix = 'service=notice',
+            table_name = 'notice_'+vpc_id.replace('-','_'),
+            columns = [
+                _glue.Column(
+                    name = 'actions',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'dst',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'file_desc',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'file_mime_type',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'fuid',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'id.orig_h',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'id.orig_p',
+                    type = _glue.Schema.SMALL_INT
+                ),
+                _glue.Column(
+                    name = 'id.resp_h',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'id.resp_p',
+                    type = _glue.Schema.SMALL_INT
+                ),
+                _glue.Column(
+                    name = 'msg',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'n',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'note',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'p',
+                    type = _glue.Schema.SMALL_INT
+                ),
+                _glue.Column(
+                    name = 'peer_descr',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'proto',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'remote_location.city',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'remote_location.country_code',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'remote_location.latitude',
+                    type = _glue.Schema.DOUBLE
+                ),
+                _glue.Column(
+                    name = 'remote_location.longitude',
+                    type = _glue.Schema.DOUBLE
+                ),
+
+                _glue.Column(
+                    name = 'remote_location.region',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'src',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'sub',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'suppress_for',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'ts',
+                    type = _glue.Schema.TIMESTAMP
+                ),
+                _glue.Column(
+                    name = 'uid',
+                    type = _glue.Schema.INTEGER
+                )
+            ],
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
+        )
+
 ### NTP LOG ###
 
         ntp =  _glue.Table(
@@ -862,6 +1159,82 @@ class SiphonParser(Stack):
             enable_partition_filtering = True
         )
 
+### SOFTWARE LOG ###
+
+        software =  _glue.Table(
+            self, 'software',
+            bucket = archive,
+            database = database,
+            s3_prefix = 'service=software',
+            table_name = 'software_'+vpc_id.replace('-','_'),
+            columns = [
+                _glue.Column(
+                    name = 'host',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'host_p',
+                    type = _glue.Schema.SMALL_INT
+                ),
+                _glue.Column(
+                    name = 'name',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'software_type',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'ts',
+                    type = _glue.Schema.TIMESTAMP
+                ),
+                _glue.Column(
+                    name = 'unparsed_version',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'version.addl',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'version.major',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'version.minor',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'version.minor2',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'version.minor3',
+                    type = _glue.Schema.BIG_INT
+                )
+            ],
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
+        )
+
 ### SSL LOG ###
 
         ssl =  _glue.Table(
@@ -917,7 +1290,7 @@ class SiphonParser(Stack):
                 ),
                 _glue.Column(
                     name = 'next_protocol',
-                    type = _glue.Schema.INTEGER
+                    type = _glue.Schema.BINARY # _glue.Schema.INTEGER
                 ),
                 _glue.Column(
                     name = 'established',
@@ -954,6 +1327,142 @@ class SiphonParser(Stack):
                 _glue.Column(
                     name = 'ts',
                     type = _glue.Schema.TIMESTAMP
+                )
+            ],
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
+        )
+
+### STATS LOG ###
+
+        stats =  _glue.Table(
+            self, 'stats',
+            bucket = archive,
+            database = database,
+            s3_prefix = 'service=stats',
+            table_name = 'stats_'+vpc_id.replace('-','_'),
+            columns = [
+                _glue.Column(
+                    name = 'active_dns_requests',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'active_files',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'active_icmp_conns',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'active_tcp_conns',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'active_timers',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'active_udp_conns',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'bytes_recv',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'dns_requests',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'events_proc',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'events_queued',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'files',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'icmp_conns',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'mem',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'peer',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'pkt_lag',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'pkts_dropped',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'pkts_link',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'pkts_proc',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'reassem_file_size',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'reassem_frag_size',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'reassem_tcp_size',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'reassem_unknown_size',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'tcp_conns',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'timers',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'ts',
+                    type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'udp_conns',
+                    type = _glue.Schema.BIG_INT
                 )
             ],
             partition_keys = [
@@ -1177,7 +1686,7 @@ class SiphonParser(Stack):
                 ),
                 _glue.Column(
                     name = 'certificate.curve',
-                    type = _glue.Schema.INTEGER
+                    type = _glue.Schema.BINARY # _glue.Schema.INTEGER
                 ),
                 _glue.Column(
                     name = 'san.dns',
