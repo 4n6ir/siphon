@@ -37,7 +37,7 @@ def handler(event, context):
     output = parsed[2].split('.')
     partitions = parsed[1].split('-')
     
-    if output[0] != 'conn-summary' and output[0] != 'loaded_scripts' and output[0] != 'stderr' and output[0] != 'stdout':
+    if output[0] != 'conn-summary' and output[0] != 'loaded_scripts' and output[0] != 'reporter' and output[0] != 'stderr' and output[0] != 'stdout':
         
         logger.info('STARTED: '+objectname)
     
