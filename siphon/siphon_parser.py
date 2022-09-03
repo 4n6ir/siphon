@@ -66,6 +66,62 @@ class SiphonParser(Stack):
             database_name = 'siphon_'+vpc_id.replace('-','_')
         )
 
+### BROKER LOG ###
+
+        broker =  _glue.Table(
+            self, 'broker',
+            bucket = archive,
+            database = database,
+            s3_prefix = 'service=broker',
+            table_name = 'broker_'+vpc_id.replace('-','_'),
+            columns = [
+                _glue.Column(
+                    name = 'ev',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'message',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'peer.address',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'peer.bound_port',
+                    type = _glue.Schema.SMALL_INT
+                ),
+                _glue.Column(
+                    name = 'ts',
+                    type = _glue.Schema.TIMESTAMP
+                ),
+                _glue.Column(
+                    name = 'ty',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
+        )
+
 ### CAPTURE LOSS LOG ###
 
         capture_loss =  _glue.Table(
@@ -98,6 +154,50 @@ class SiphonParser(Stack):
                 _glue.Column(
                     name = 'ts_delta',
                     type = _glue.Schema.STRING
+                )
+            ],
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
+        )
+
+### CLUSTER LOG ###
+
+        cluster =  _glue.Table(
+            self, 'cluster',
+            bucket = archive,
+            database = database,
+            s3_prefix = 'service=cluster',
+            table_name = 'cluster_'+vpc_id.replace('-','_'),
+            columns = [
+                _glue.Column(
+                    name = 'message',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'node',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'ts',
+                    type = _glue.Schema.TIMESTAMP
                 )
             ],
             partition_keys = [
@@ -866,6 +966,46 @@ class SiphonParser(Stack):
             enable_partition_filtering = True
         )
 
+### KNOWN HOSTS LOG ###
+
+        known_hosts =  _glue.Table(
+            self, 'known_hosts',
+            bucket = archive,
+            database = database,
+            s3_prefix = 'service=known_hosts',
+            table_name = 'known_hosts_'+vpc_id.replace('-','_'),
+            columns = [
+                _glue.Column(
+                    name = 'host',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'ts',
+                    type = _glue.Schema.TIMESTAMP
+                )
+            ],
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
+        )
+
 ### KNOWN SERVICES LOG ###
 
         known_services =  _glue.Table(
@@ -1131,6 +1271,58 @@ class SiphonParser(Stack):
                 _glue.Column(
                     name = 'num_exts',
                     type = _glue.Schema.BIG_INT
+                ),
+                _glue.Column(
+                    name = 'ts',
+                    type = _glue.Schema.TIMESTAMP
+                )
+            ],
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
+        )
+
+### PACKET FILTER LOG ###
+
+        packet_filter =  _glue.Table(
+            self, 'packet_filter',
+            bucket = archive,
+            database = database,
+            s3_prefix = 'service=packet_filter',
+            table_name = 'packet_filter_'+vpc_id.replace('-','_'),
+            columns = [
+                _glue.Column(
+                    name = 'filter',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'init',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'node',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'success',
+                    type = _glue.Schema.INTEGER
                 ),
                 _glue.Column(
                     name = 'ts',
