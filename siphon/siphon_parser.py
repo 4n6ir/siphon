@@ -910,6 +910,118 @@ class SiphonParser(Stack):
             enable_partition_filtering = True
         )
 
+### KERBEROS LOG ###
+
+        kerberos =  _glue.Table(
+            self, 'kerberos',
+            bucket = archive,
+            database = database,
+            s3_prefix = 'service=kerberos',
+            table_name = 'kerberos_'+vpc_id.replace('-','_'),
+            columns = [
+                _glue.Column(
+                    name = 'cipher',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'client',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'client_cert_fuid',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'client_cert_subject',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'error_msg',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'forwardable',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'from',
+                    type = _glue.Schema.TIMESTAMP
+                ),
+                _glue.Column(
+                    name = 'id.orig_h',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'id.orig_p',
+                    type = _glue.Schema.SMALL_INT
+                ),
+                _glue.Column(
+                    name = 'id.resp_h',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'id.resp_p',
+                    type = _glue.Schema.SMALL_INT
+                ),
+                _glue.Column(
+                    name = 'renewable',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'request_type',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'server_cert_fuid',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'server_cert_subject',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'service',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'success',
+                    type = _glue.Schema.INTEGER
+                ),
+                _glue.Column(
+                    name = 'till',
+                    type = _glue.Schema.TIMESTAMP
+                ),
+                _glue.Column(
+                    name = 'ts',
+                    type = _glue.Schema.TIMESTAMP
+                ),
+                _glue.Column(
+                    name = 'uid',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            partition_keys = [
+                _glue.Column(
+                    name = 'year',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'month',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'day',
+                    type = _glue.Schema.STRING
+                ),
+                _glue.Column(
+                    name = 'siphon',
+                    type = _glue.Schema.STRING
+                )
+            ],
+            data_format = _glue.DataFormat.PARQUET,
+            enable_partition_filtering = True
+        )
+
 ### KNOWN CERTS LOG ###
 
         known_certs =  _glue.Table(
