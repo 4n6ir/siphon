@@ -1,4 +1,7 @@
+import cdk_nag
+
 from aws_cdk import (
+    Aspects,
     RemovalPolicy,
     Stack,
     aws_glue_alpha as _glue,
@@ -18,6 +21,22 @@ class SiphonParser(Stack):
         vpc_id = 'vpc-0aa03892e4dcb8332'    # <-- Enter VPC ID
 
 ################################################################################
+
+        Aspects.of(self).add(
+            cdk_nag.AwsSolutionsChecks(
+                log_ignores = True,
+                verbose = True
+            )
+        )
+
+        cdk_nag.NagSuppressions.add_stack_suppressions(
+            self, suppressions = [
+                {'id': 'AwsSolutions-S1','reason': 'GitHub Issue'},
+                {'id': 'AwsSolutions-S10','reason': 'GitHub Issue'},
+                {'id': 'AwsSolutions-IAM4','reason': 'GitHub Issue'},
+                {'id': 'AwsSolutions-IAM5','reason': 'GitHub Issue'}
+            ]
+        )
 
         account = Stack.of(self).account
         region = Stack.of(self).region
