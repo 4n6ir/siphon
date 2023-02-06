@@ -32,7 +32,6 @@ class SiphonParser(Stack):
         cdk_nag.NagSuppressions.add_stack_suppressions(
             self, suppressions = [
                 {'id': 'AwsSolutions-S1','reason': 'GitHub Issue'},
-                {'id': 'AwsSolutions-S10','reason': 'GitHub Issue'},
                 {'id': 'AwsSolutions-IAM4','reason': 'GitHub Issue'},
                 {'id': 'AwsSolutions-IAM5','reason': 'GitHub Issue'}
             ]
@@ -49,6 +48,7 @@ class SiphonParser(Stack):
             block_public_access = _s3.BlockPublicAccess.BLOCK_ALL,
             removal_policy = RemovalPolicy.DESTROY,
             auto_delete_objects = True,
+            enforce_ssl = True,
             versioned = True
         )
 
