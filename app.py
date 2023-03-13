@@ -32,6 +32,6 @@ SiphonParser(
 )
 
 cdk.Tags.of(app).add('Alias','Siphon')
-cdk.Tags.of(app).add('GitHub','https://github.com/jblukach/siphon.git')
+cdk.Tags.of(app).add('GitHub','https://github.com/4n6ir/siphon.git')
 
 app.synth()
