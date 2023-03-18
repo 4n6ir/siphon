@@ -22,8 +22,8 @@ Siphon was built using the Cloud Deployment Kit (CDK) to attach an instance with
 
 Minimum requirements are network connectivity to the monitored resource with an instance that has 2 vCPUs, 2 GiB Memory, and 8 GB Storage.
 
-- https://github.com/jblukach/siphon/blob/main/siphon/siphon_stack.py#L35
-- https://github.com/jblukach/siphon/blob/main/siphon/siphon_parser.py#L21
+- https://github.com/4n6ir/siphon/blob/main/siphon/siphon_stack.py#L35
+- https://github.com/4n6ir/siphon/blob/main/siphon/siphon_parser.py#L21
 
 ```
 vpc_id = 'vpc-04eae279ceb94d7f6'    # <-- Enter VPC ID
@@ -35,7 +35,7 @@ ebs_data = 4                        # <-- Enter Data Storage GBs
 
 A network monitoring interface is attached to every subnet in the configured VPC based on the availability zone. 
 
-- https://github.com/jblukach/siphon/blob/main/siphon/siphon_stack.py#L400
+- https://github.com/4n6ir/siphon/blob/main/siphon/siphon_stack.py#L400
 
 Ubuntu 20.04 was used for long-term support and software dependencies but does not have AWS CLI installed by default requiring a second installation stage using the SSM agent.
 
