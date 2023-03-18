@@ -35,7 +35,7 @@ ebs_data = 4                        # <-- Enter Data Storage GBs
 
 A network monitoring interface is attached to every subnet in the configured VPC based on the availability zone. 
 
-- https://github.com/4n6ir/siphon/blob/main/siphon/siphon_stack.py#L400
+- https://github.com/4n6ir/siphon/blob/main/siphon/siphon_stack.py#L402
 
 Ubuntu 20.04 was used for long-term support and software dependencies but does not have AWS CLI installed by default requiring a second installation stage using the SSM agent.
 
